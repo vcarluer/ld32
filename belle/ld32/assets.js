@@ -1,1 +1,1 @@
-game.assets = { "fonts" : [  ], "images" : [ { "name" : "intro_bkg.png" }, { "name" : "Spaceman_thb.png" } ], "sounds" : [ { "name" : "intro_0.wav" } ], "subdirs" : { "fonts" : "", "images" : "", "sounds" : "" } }
+game.assets = { "fonts" : [  ], "images" : [ { "name" : "Spaceman_thb.png" }, { "name" : "intro_bkg.png" } ], "sounds" : [ { "name" : "intro_0.wav" } ], "subdirs" : { "fonts" : "", "images" : "", "sounds" : "" } }
