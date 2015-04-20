@@ -1,4 +1,4 @@
-Ludum Dare 32 entry
+Ludum Dare 32 entry: http://ludumdare.com/compo/ludum-dare-32/?action=preview&uid=11818
 CREDITS:
 Space station: Gradgrind space station" by vostok
 Released under
