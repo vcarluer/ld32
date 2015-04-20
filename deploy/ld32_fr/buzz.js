@@ -1,25 +1,22 @@
  // ----------------------------------------------------------------------------
  // Buzz, a Javascript HTML5 Audio library
- // v1.1.9 - Built 2015-03-03 14:20
+ // v1.1.0 - released 2013-08-15 13:18
  // Licensed under the MIT license.
  // http://buzz.jaysalvat.com/
  // ----------------------------------------------------------------------------
- // Copyright (C) 2010-2015 Jay Salvat
+ // Copyright (C) 2010-2013 Jay Salvat
  // http://jaysalvat.com/
  // ----------------------------------------------------------------------------
 
-(function(context, factory) {
-    "use strict";
+(function(name, context, factory) {
     if (typeof module !== "undefined" && module.exports) {
         module.exports = factory();
-    } else if (typeof define === "function" && define.amd) {
-        define([], factory);
+    } else if (typeof context.define === "function" && context.define.amd) {
+        define(name, [], factory);
     } else {
-        context.buzz = factory();
+        context[name] = factory();
     }
-})(this, function() {
-    "use strict";
-    var AudioContext = window.AudioContext || window.webkitAudioContext;
+})("buzz", this, function() {
     var buzz = {
         defaults: {
             autoplay: false,
@@ -29,8 +26,7 @@
             placeholder: "--",
             preload: "metadata",
             volume: 80,
-            webAudioApi: false,
-            document: window.document
+            document: document
         },
         types: {
             mp3: "audio/mpeg",
@@ -41,16 +37,6 @@
         },
         sounds: [],
         el: document.createElement("audio"),
-        getAudioContext: function() {
-            if (this.audioCtx === undefined) {
-                try {
-                    this.audioCtx = AudioContext ? new AudioContext() : null;
-                } catch (e) {
-                    this.audioCtx = null;
-                }
-            }
-            return this.audioCtx;
-        },
         sound: function(src, options) {
             options = options || {};
             var doc = options.document || buzz.defaults.document;
@@ -375,7 +361,7 @@
                     var idx = types[t], type = idx.split(".")[0];
                     for (var i = 0; i < events.length; i++) {
                         var namespace = events[i].idx.split(".");
-                        if (events[i].idx === idx || namespace[1] && namespace[1] === idx.replace(".", "")) {
+                        if (events[i].idx == idx || namespace[1] && namespace[1] == idx.replace(".", "")) {
                             this.sound.removeEventListener(type, events[i].func, true);
                             events.splice(i, 1);
                         }
@@ -398,7 +384,7 @@
                 });
                 return this;
             };
-            this.trigger = function(types, detail) {
+            this.trigger = function(types) {
                 if (!supported) {
                     return this;
                 }
@@ -407,10 +393,9 @@
                     var idx = types[t];
                     for (var i = 0; i < events.length; i++) {
                         var eventType = events[i].idx.split(".");
-                        if (events[i].idx === idx || eventType[0] && eventType[0] === idx.replace(".", "")) {
+                        if (events[i].idx == idx || eventType[0] && eventType[0] == idx.replace(".", "")) {
                             var evt = doc.createEvent("HTMLEvents");
                             evt.initEvent(eventType[0], false, true);
-                            evt.originalEvent = detail;
                             this.sound.dispatchEvent(evt);
                         }
                     }
@@ -482,19 +467,6 @@
                     func.call(self);
                 }
             };
-            this.addSource = function(src) {
-                var self = this, source = doc.createElement("source");
-                source.src = src;
-                if (buzz.types[getExt(src)]) {
-                    source.type = buzz.types[getExt(src)];
-                }
-                this.sound.appendChild(source);
-                source.addEventListener("error", function(e) {
-                    self.sound.networkState = 3;
-                    self.trigger("sourceerror", e);
-                });
-                return source;
-            };
             function timerangeToArray(timeRange) {
                 var array = [], length = timeRange.length - 1;
                 for (var i = 0; i <= length; i++) {
@@ -508,36 +480,35 @@
             function getExt(filename) {
                 return filename.split(".").pop();
             }
+            function addSource(sound, src) {
+                var source = doc.createElement("source");
+                source.src = src;
+                if (buzz.types[getExt(src)]) {
+                    source.type = buzz.types[getExt(src)];
+                }
+                sound.appendChild(source);
+            }
             if (supported && src) {
                 for (var i in buzz.defaults) {
                     if (buzz.defaults.hasOwnProperty(i)) {
-                        if (options[i] === undefined) {
-                            options[i] = buzz.defaults[i];
-                        }
+                        options[i] = options[i] || buzz.defaults[i];
                     }
                 }
                 this.sound = doc.createElement("audio");
-                if (options.webAudioApi) {
-                    var audioCtx = buzz.getAudioContext();
-                    if (audioCtx) {
-                        this.source = audioCtx.createMediaElementSource(this.sound);
-                        this.source.connect(audioCtx.destination);
-                    }
-                }
                 if (src instanceof Array) {
                     for (var j in src) {
                         if (src.hasOwnProperty(j)) {
-                            this.addSource(src[j]);
+                            addSource(this.sound, src[j]);
                         }
                     }
                 } else if (options.formats.length) {
                     for (var k in options.formats) {
                         if (options.formats.hasOwnProperty(k)) {
-                            this.addSource(src + "." + options.formats[k]);
+                            addSource(this.sound, src + "." + options.formats[k]);
                         }
                     }
                 } else {
-                    this.addSource(src);
+                    addSource(this.sound, src);
                 }
                 if (options.loop) {
                     this.loop();
@@ -571,7 +542,7 @@
                 soundArray = argsToArray(soundArray, arguments);
                 for (var a = 0; a < soundArray.length; a++) {
                     for (var i = 0; i < sounds.length; i++) {
-                        if (sounds[i] === soundArray[a]) {
+                        if (sounds[i] == soundArray[a]) {
                             sounds.splice(i, 1);
                             break;
                         }
@@ -628,10 +599,6 @@
             };
             this.unloop = function() {
                 fn("unloop");
-                return this;
-            };
-            this.setSpeed = function(speed) {
-                fn("setSpeed", speed);
                 return this;
             };
             this.setTime = function(time) {
@@ -710,10 +677,10 @@
         },
         fromTimer: function(time) {
             var splits = time.toString().split(":");
-            if (splits && splits.length === 3) {
+            if (splits && splits.length == 3) {
                 time = parseInt(splits[0], 10) * 3600 + parseInt(splits[1], 10) * 60 + parseInt(splits[2], 10);
             }
-            if (splits && splits.length === 2) {
+            if (splits && splits.length == 2) {
                 time = parseInt(splits[0], 10) * 60 + parseInt(splits[1], 10);
             }
             return time;
